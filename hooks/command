@@ -5,11 +5,12 @@ set -euo pipefail
 if [[ -z "${TMP_DIR:-}" ]]; then
   TMP_DIR=$(mktemp -d -t sauce-connect-buildkite-plugin.XXXXXXXXXX)
   function cleanup {
+    echo "Cleaning up ${TMP_DIR}"
     rm -rf "${TMP_DIR}"
   }
 else
   function cleanup {
-    echo "Not removing given TMP_DIR"
+    echo "Not removing given TMP_DIR (${TMP_DIR})"
   }
 fi
 trap halt_sc EXIT
@@ -81,18 +82,21 @@ main() {
 halt_sc() {
   echo "--- :saucelabs: Stopping sauce-connect"
   local pidfile="${TMP_DIR}/pid"
-  local pid
-  pid=$(cat "${pidfile}") || true
-  kill -SIGINT "${pid}" || true
-  while is_pid_alive "${pid}"; do
-    sleep 1
-  done
+  if [[ -e "${pidfile}" ]]; then
+    local pid
+    pid=$(cat "${pidfile}")
+    kill -SIGINT "${pid}"
+    while is_pid_alive "${pid}"; do
+      sleep 1
+    done
+  fi
   cleanup
 }
 
 run_buildkite_command() {
   if [[ -n "${BUILDKITE_COMMAND:-}" ]]; then
-    echo "--- Running command '${BUILDKITE_COMMAND}'"
+    echo "--- :saucelabs: Running command"
+    echo "Command: '${BUILDKITE_COMMAND}'"
     bash -c "${BUILDKITE_COMMAND}"
   fi
 }
@@ -166,7 +170,7 @@ wait_for_readyfile() {
 
 upload_sauce_connect_logs() {
   pushd "${TMP_DIR}" >/dev/null
-  echo "--- Uploading sauce-connect logs"
+  echo "--- :saucelabs: Uploading sauce-connect logs"
   buildkite-agent artifact upload "sauce-connect.*.log"
   popd >/dev/null
 }
