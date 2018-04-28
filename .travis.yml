@@ -1,0 +1,9 @@
+sudo: required
+
+services:
+  - docker
+
+script:
+  - .ci/lint-plugin.sh
+  - .ci/lint-shell.sh
+  - .ci/test.sh

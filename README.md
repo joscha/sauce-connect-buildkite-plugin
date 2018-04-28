@@ -43,32 +43,12 @@ steps:
 
 ## Tests
 
-To run the tests, run:
-```sh
-docker-compose run --rm tests
-```
+To run the tests, run `.ci/test.sh`
 
 ## Lint
 
-### The plugin
-```sh
-docker run \
-  -it \
-  --rm \
-  -v "$(pwd):/plugin" \
-  buildkite/plugin-linter \
-    --name sauce-connect
-```
-
-### The shell files
-```sh
-docker run \
-  --volume "$(pwd)":/src/ \
-  --workdir=/src \
-  --tty \
-  --rm \
-  koalaman/shellcheck hooks/*
-```
+* Plugin: `.ci/lint-plugin.sh`
+* Shell files `.ci/lint-shell.sh`
 
 ## License
 
