@@ -9,6 +9,6 @@ docker run \
   --rm \
   -v "$(pwd):/plugin" \
   buildkite/plugin-linter \
-    --name sauce-connect
+    --name joscha/sauce-connect
 
 popd >/dev/null
