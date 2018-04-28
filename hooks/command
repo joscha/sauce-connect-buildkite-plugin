@@ -144,7 +144,6 @@ wait_for_readyfile() {
      && ( [[ -z "${pid}" ]] || kill -0 "${pid}" >/dev/null 2>&1) ; do
     i=$((i+1))
     sleep "${sleep_time_seconds}"
-    echo "waiting for readyfile ($((sleep_time_seconds*i))s)"
     if [[ -e "${pidfile}" ]] && [[ -z "${pid}" ]]; then
       pid=$(cat "${pidfile}")
     fi

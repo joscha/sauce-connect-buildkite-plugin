@@ -185,7 +185,6 @@ attempts=3
 
   assert_failure
   assert_output --partial "error: sauce-connect failed!"
-  assert_output --partial "waiting for readyfile (120s)"
   assert_output --partial "sauce-connect timed out!"
   assert_output --partial "attempt 1"
   assert_output --partial "sc connect 1"
