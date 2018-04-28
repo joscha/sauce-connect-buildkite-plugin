@@ -1,18 +1,24 @@
 #!/bin/bash
 set -euo pipefail
 
-TMP_DIR=$(mktemp -d -t sauce-connect-buildkite-plugin.XXXXXXXXXX)
-function cleanup {
-  rm -rf "${TMP_DIR}"
-}
-trap cleanup EXIT
+# Allow to pass TMP_DIR for testing purposes
+if [[ -z "${TMP_DIR:-}" ]]; then
+  TMP_DIR=$(mktemp -d -t sauce-connect-buildkite-plugin.XXXXXXXXXX)
+  function cleanup {
+    rm -rf "${TMP_DIR}"
+  }
+  trap cleanup EXIT
+else
+  echo "Using given TMP_DIR: ${TMP_DIR}"
+fi
 
+# See https://hub.docker.com/r/ustwo/sauce-connect/tags/
 DEFAULT_SAUCE_CONNECT_VERSION="latest"
 
 error() {
   local message="$1"
   echo "^^^ +++"
-  echo "+++ :warning: error: ${message}" >&2
+  echo "+++ :x: error: ${message}" >&2
   exit 1  
 }
 
@@ -41,8 +47,10 @@ main() {
 }
 
 run_command() {
-  echo "--- Running command '${BUILDKITE_COMMAND}'"
-  "${BUILDKITE_COMMAND}"
+  if [[ -n "${BUILDKITE_COMMAND:-}" ]]; then
+    echo "--- Running command '${BUILDKITE_COMMAND}'"
+    bash -c "${BUILDKITE_COMMAND}"
+  fi
 }
 
 sc3() {
@@ -60,11 +68,10 @@ sc() {
   local sauce_access_key="$5"
 
   echo "--- :saucelabs: Spinning up sauce-connect, attempt ${attempt}"
-  echo "Using tunnel-identifier: '${tunnel_identifier}'"
-  rm -rf "${TMP_DIR}"
-  mkdir -p "${TMP_DIR}"
+  echo ":information_source: Using tunnel-identifier: '${tunnel_identifier}'"
   local readyfile="${TMP_DIR}/ready"
 
+  echo -n ":information_source: Docker process: "
   docker run -d -p 8000:8000 -v "${TMP_DIR}:/tmp" ustwo/sauce-connect:"${sauce_connect_version}" \
     -P 8000 \
     -u "${sauce_username}" \
@@ -72,12 +79,12 @@ sc() {
     --tunnel-identifier "${tunnel_identifier}" \
     --readyfile "/tmp/ready" \
     --logfile "/tmp/sauce-connect.${attempt}.log"
-
+  
   if ! wait_for_readyfile "${readyfile}"; then
     echo ":warning: sauce-connect timed out!"
     return 1
   else
-    echo "sauce-connect is up \o/"
+    echo ":white_check_mark: sauce-connect is up \o/"
   fi
 }
 
@@ -90,7 +97,7 @@ wait_for_readyfile() {
   while [ "${i}" -lt "$((${max_wait_seconds}/${sleep_time_seconds}))" -a ! -e "${readyfile}" ]; do
     i=$((i+1))
     sleep "${sleep_time_seconds}"
-    echo "Waiting for readyfile ($((${sleep_time_seconds}*${i}))s)"
+    echo ":hourglass: waiting for readyfile ($((${sleep_time_seconds}*${i}))s)"
   done
   [[ -e "${readyfile}" ]]
 }

@@ -45,8 +45,6 @@ steps:
 
 To run the tests, run:
 ```sh
-export SAUCE_USERNAME=<your-sauce-username>
-export SAUCE_ACCESS_KEY=<your-sauce-access-key>
 docker-compose run --rm tests
 ```
 
