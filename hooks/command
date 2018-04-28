@@ -72,12 +72,22 @@ main() {
     "${SAUCE_ACCESS_KEY}"
 
   run_buildkite_command
+  halt_sc
+}
+
+halt_sc() {
+  echo "--- :saucelabs: Stopping sauce-connect"
+  local pidfile="${TMP_DIR}/pid"
+  kill -SIGINT $(cat "${pidfile}") || true
 }
 
 run_buildkite_command() {
   if [[ -n "${BUILDKITE_COMMAND:-}" ]]; then
     echo "--- Running command '${BUILDKITE_COMMAND}'"
-    bash -c "${BUILDKITE_COMMAND}"
+    if ! bash -c "${BUILDKITE_COMMAND}"; then
+      halt_sc
+      return 1
+    fi
   fi
 }
 
