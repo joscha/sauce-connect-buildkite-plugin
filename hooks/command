@@ -80,7 +80,7 @@ main() {
 }
 
 halt_sc() {
-  echo "--- :saucelabs: Stopping sauce-connect"
+  echo "--- :saucelabs:/sauce-connect: Stopping"
   local pidfile="${TMP_DIR}/pid"
   if [[ -e "${pidfile}" ]]; then
     local pid
@@ -89,14 +89,16 @@ halt_sc() {
     while is_pid_alive "${pid}"; do
       sleep 1
     done
+    echo
   fi
   cleanup
 }
 
 run_buildkite_command() {
   if [[ -n "${BUILDKITE_COMMAND:-}" ]]; then
-    echo "--- :saucelabs: Running command"
-    echo "Command: '${BUILDKITE_COMMAND}'"
+    echo "--- :saucelabs:/sauce-connect: Running command"
+    echo "Command: ${BUILDKITE_COMMAND}"
+    echo
     bash -c "${BUILDKITE_COMMAND}"
   fi
 }
@@ -114,7 +116,7 @@ sc1() {
   local sauce_username="$3"
   local sauce_access_key="$4"
 
-  echo "--- :saucelabs: Starting sauce-connect (Attempt ${attempt})"
+  echo "--- :saucelabs:/sauce-connect: Starting (Attempt ${attempt})"
   local readyfile="${TMP_DIR}/ready"
   local pidfile="${TMP_DIR}/pid"
 
@@ -170,7 +172,7 @@ wait_for_readyfile() {
 
 upload_sauce_connect_logs() {
   pushd "${TMP_DIR}" >/dev/null
-  echo "--- :saucelabs: Uploading sauce-connect logs"
+  echo "--- :saucelabs:/sauce-connect: Uploading logs"
   buildkite-agent artifact upload "sauce-connect.*.log"
   popd >/dev/null
 }
