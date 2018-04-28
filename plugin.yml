@@ -3,7 +3,6 @@ description: Runs sauce-connect for a given step
 author: https://github.com/joscha
 requirements:
   - buildkite-agent
-  - docker
 public: true
 configuration:
   properties:

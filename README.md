@@ -4,8 +4,6 @@ A [Buildkite plugin](https://buildkite.com/docs/agent/v3/plugins) that opens a [
 
 It contains a [command hook](hooks/command), and [tests](tests/command.bats) using [plugin-tester](https://github.com/buildkite-plugins/plugin-tester).
 
-It uses the [ustwo/docker-sauce-connect](https://github.com/ustwo/docker-sauce-connect) docker image.
-
 ## Example
 
 ```yml
@@ -31,14 +29,14 @@ steps:
 
 ### `sauce-connect-version` (optional)
 
-The Sauce Connect version to use, available versions, see [here](https://hub.docker.com/r/ustwo/sauce-connect/tags/). Defaults to `"latest"`.
+The Sauce Connect version to use, available versions, see [here](https://wiki.saucelabs.com/display/DOCS/Sauce+Connect+Proxy).
 
 ```yml
 steps:
   - command: 'yarn && yarn saucelabs-based-tests'
     plugins:
       joscha/sauce-connect#v1.0.2:
-        sauce-connect-version: "4.4"
+        sauce-connect-version: "4.4.12"
 ```
 
 ## Tests
