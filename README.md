@@ -10,7 +10,7 @@ It contains a [command hook](hooks/command), and [tests](tests/command.bats) usi
 steps:
   - command: 'yarn && yarn saucelabs-based-tests'
     plugins:
-      joscha/sauce-connect#v1.0.2: ~
+      joscha/sauce-connect#v2.0.0: ~
 ```
 
 ## Configuration
@@ -23,7 +23,7 @@ The tunnel identifier to use, by default it will use the Buildkite Job ID (`BUIL
 steps:
   - command: 'yarn && yarn saucelabs-based-tests'
     plugins:
-      joscha/sauce-connect#v1.0.2:
+      joscha/sauce-connect#v2.0.0:
         tunnel-identifier: "my-custom-tunnel-id"
 ```
 
@@ -35,7 +35,7 @@ The Sauce Connect version to use, available versions, see [here](https://wiki.sa
 steps:
   - command: 'yarn && yarn saucelabs-based-tests'
     plugins:
-      joscha/sauce-connect#v1.0.2:
+      joscha/sauce-connect#v2.0.0:
         sauce-connect-version: "4.4.12"
 ```
 
