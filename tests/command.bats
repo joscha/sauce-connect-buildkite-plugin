@@ -32,7 +32,7 @@ stub_sc() {
   local args=( )
   local attempt
   for (( attempt=1; attempt<="${attempts}"; attempt++ )); do
-    args+=( "-u ${sauce_username} -k ${sauce_access_key} --tunnel-identifier ${tunnel_identifier} --readyfile ${TMP_DIR}/ready --pidfile ${TMP_DIR}/pid --logfile ${TMP_DIR}/sauce-connect.${attempt}.log : ${exec} ${attempt}" )
+    args+=( "-u ${sauce_username} -k ${sauce_access_key} --tunnel-identifier ${tunnel_identifier} --readyfile ${TMP_DIR}/ready --pidfile ${TMP_DIR}/pid --logfile ${TMP_DIR}/sauce-connect.${attempt}.log --verbose : ${exec} ${attempt}" )
   done
 
   stub sc "${args[@]}"
@@ -173,24 +173,18 @@ attempts=3
     "latest" \
     "${attempts}"
 
-  local attempt
-  for attempt in {1..$attempts}; do
-    local i
-    for i in {1..60}; do
-      stub sleep 2
-    done
-  done
+  stub sleep
 
   run "${PWD}/hooks/command"
 
   assert_failure
   assert_output --partial "error: sauce-connect failed!"
   assert_output --partial "sauce-connect timed out!"
-  assert_output --partial "attempt 1"
+  assert_output --partial "(Attempt 1)"
   assert_output --partial "sc connect 1"
-  assert_output --partial "attempt 2"
+  assert_output --partial "(Attempt 2)"
   assert_output --partial "sc connect 2"
-  assert_output --partial "attempt 3"
+  assert_output --partial "(Attempt 3)"
   assert_output --partial "sc connect 3"
   assert_output --partial "Uploaded sauce-connect.*.log artifacts"
 

@@ -7,8 +7,12 @@ if [[ -z "${TMP_DIR:-}" ]]; then
   function cleanup {
     rm -rf "${TMP_DIR}"
   }
-  trap cleanup EXIT
+else
+  function cleanup {
+    echo "Not removing given TMP_DIR"
+  }
 fi
+trap halt_sc EXIT
 
 # See https://wiki.saucelabs.com/display/DOCS/Sauce+Connect+Proxy
 DEFAULT_SAUCE_CONNECT_VERSION="4.4.12"
@@ -72,22 +76,24 @@ main() {
     "${SAUCE_ACCESS_KEY}"
 
   run_buildkite_command
-  halt_sc
 }
 
 halt_sc() {
   echo "--- :saucelabs: Stopping sauce-connect"
   local pidfile="${TMP_DIR}/pid"
-  kill -SIGINT $(cat "${pidfile}") || true
+  local pid
+  pid=$(cat "${pidfile}") || true
+  kill -SIGINT "${pid}" || true
+  while is_pid_alive "${pid}"; do
+    sleep 1
+  done
+  cleanup
 }
 
 run_buildkite_command() {
   if [[ -n "${BUILDKITE_COMMAND:-}" ]]; then
     echo "--- Running command '${BUILDKITE_COMMAND}'"
-    if ! bash -c "${BUILDKITE_COMMAND}"; then
-      halt_sc
-      return 1
-    fi
+    bash -c "${BUILDKITE_COMMAND}"
   fi
 }
 
@@ -104,7 +110,7 @@ sc1() {
   local sauce_username="$3"
   local sauce_access_key="$4"
 
-  echo "--- :saucelabs: Spinning up sauce-connect, attempt ${attempt}"
+  echo "--- :saucelabs: Starting sauce-connect (Attempt ${attempt})"
   local readyfile="${TMP_DIR}/ready"
   local pidfile="${TMP_DIR}/pid"
 
@@ -120,7 +126,9 @@ sc1() {
     --tunnel-identifier "${tunnel_identifier}" \
     --readyfile "${readyfile}" \
     --pidfile "${pidfile}" \
-    --logfile "${TMP_DIR}/sauce-connect.${attempt}.log" &
+    --logfile "${TMP_DIR}/sauce-connect.${attempt}.log" \
+    --verbose \
+    &
 
   popd >/dev/null
   
@@ -132,6 +140,11 @@ sc1() {
   fi
 }
 
+is_pid_alive() {
+  local pid="$1"
+  kill -0 "${pid}" >/dev/null 2>&1
+}
+
 wait_for_readyfile() {
   local readyfile="$1"
   local pidfile="$2"
@@ -141,7 +154,7 @@ wait_for_readyfile() {
   local pid=""
   while [[ "${i}" -lt "$((max_wait_seconds/sleep_time_seconds))" ]] \
      && [[ ! -e "${readyfile}" ]] \
-     && ( [[ -z "${pid}" ]] || kill -0 "${pid}" >/dev/null 2>&1) ; do
+     && ( [[ -z "${pid}" ]] || is_pid_alive "${pid}") ; do
     i=$((i+1))
     sleep "${sleep_time_seconds}"
     if [[ -e "${pidfile}" ]] && [[ -z "${pid}" ]]; then
