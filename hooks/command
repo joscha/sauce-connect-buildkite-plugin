@@ -37,16 +37,17 @@ main() {
   local tunnel_identifier="${BUILDKITE_PLUGIN_SAUCE_CONNECT_TUNNEL_IDENTIFIER:-${BUILDKITE_JOB_ID}}"
   local sauce_connect_version="${BUILDKITE_PLUGIN_SAUCE_CONNECT_SAUCE_CONNECT_VERSION:-${DEFAULT_SAUCE_CONNECT_VERSION}}"
 
+  # shellcheck disable=SC2153
   sc3 \
     "${sauce_connect_version}" \
     "${tunnel_identifier}" \
     "${SAUCE_USERNAME}" \
     "${SAUCE_ACCESS_KEY}"
 
-  run_command
+  run_buildkite_command
 }
 
-run_command() {
+run_buildkite_command() {
   if [[ -n "${BUILDKITE_COMMAND:-}" ]]; then
     echo "--- Running command '${BUILDKITE_COMMAND}'"
     bash -c "${BUILDKITE_COMMAND}"
@@ -84,7 +85,7 @@ sc() {
     echo ":warning: sauce-connect timed out!"
     return 1
   else
-    echo ":white_check_mark: sauce-connect is up \o/"
+    echo ':white_check_mark: sauce-connect is up \o/'
   fi
 }
 
@@ -94,10 +95,10 @@ wait_for_readyfile() {
   local sleep_time_seconds=2
   local max_wait_seconds=120
 
-  while [ "${i}" -lt "$((${max_wait_seconds}/${sleep_time_seconds}))" -a ! -e "${readyfile}" ]; do
+  while [[ "${i}" -lt "$((max_wait_seconds/sleep_time_seconds))" ]] && [[ ! -e "${readyfile}" ]]; do
     i=$((i+1))
     sleep "${sleep_time_seconds}"
-    echo ":hourglass: waiting for readyfile ($((${sleep_time_seconds}*${i}))s)"
+    echo ":hourglass: waiting for readyfile ($((sleep_time_seconds*i))s)"
   done
   [[ -e "${readyfile}" ]]
 }

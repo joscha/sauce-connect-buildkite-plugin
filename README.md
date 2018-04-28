@@ -49,6 +49,8 @@ docker-compose run --rm tests
 ```
 
 ## Lint
+
+### The plugin
 ```sh
 docker run \
   -it \
@@ -56,6 +58,16 @@ docker run \
   -v "$(pwd):/plugin" \
   buildkite/plugin-linter \
     --name sauce-connect
+```
+
+### The shell files
+```sh
+docker run \
+  --volume "$(pwd)":/src/ \
+  --workdir=/src \
+  --tty \
+  --rm \
+  koalaman/shellcheck hooks/*
 ```
 
 ## License
