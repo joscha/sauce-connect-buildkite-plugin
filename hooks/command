@@ -9,7 +9,7 @@ if [[ -z "${TMP_DIR:-}" ]]; then
   }
   trap cleanup EXIT
 else
-  echo "Using given TMP_DIR: ${TMP_DIR}"
+  echo "• Using given TMP_DIR: ${TMP_DIR}"
 fi
 
 # See https://hub.docker.com/r/ustwo/sauce-connect/tags/
@@ -36,6 +36,10 @@ main() {
 
   local tunnel_identifier="${BUILDKITE_PLUGIN_SAUCE_CONNECT_TUNNEL_IDENTIFIER:-${BUILDKITE_JOB_ID}}"
   local sauce_connect_version="${BUILDKITE_PLUGIN_SAUCE_CONNECT_SAUCE_CONNECT_VERSION:-${DEFAULT_SAUCE_CONNECT_VERSION}}"
+
+  if ! hash docker >/dev/null 2>&1 ; then
+    error "docker is not available!"
+  fi
 
   # shellcheck disable=SC2153
   sc3 \
@@ -69,23 +73,25 @@ sc() {
   local sauce_access_key="$5"
 
   echo "--- :saucelabs: Spinning up sauce-connect, attempt ${attempt}"
-  echo ":information_source: Using tunnel-identifier: '${tunnel_identifier}'"
+  echo "• Using tunnel-identifier: '${tunnel_identifier}'"
   local readyfile="${TMP_DIR}/ready"
 
-  echo -n ":information_source: Docker process: "
-  docker run -d -p 8000:8000 -v "${TMP_DIR}:/tmp" ustwo/sauce-connect:"${sauce_connect_version}" \
+  echo -n "• Docker process: "
+  if ! docker run -d -p 8000:8000 -v "${TMP_DIR}:/tmp" ustwo/sauce-connect:"${sauce_connect_version}" \
     -P 8000 \
     -u "${sauce_username}" \
     -k "${sauce_access_key}" \
     --tunnel-identifier "${tunnel_identifier}" \
     --readyfile "/tmp/ready" \
-    --logfile "/tmp/sauce-connect.${attempt}.log"
+    --logfile "/tmp/sauce-connect.${attempt}.log"; then
+    error "Docker errored!"
+  fi
   
   if ! wait_for_readyfile "${readyfile}"; then
-    echo ":warning: sauce-connect timed out!"
+    echo "Warning: sauce-connect timed out!"
     return 1
   else
-    echo ':white_check_mark: sauce-connect is up \o/'
+    echo 'Success: sauce-connect is up \o/'
   fi
 }
 
@@ -98,7 +104,7 @@ wait_for_readyfile() {
   while [[ "${i}" -lt "$((max_wait_seconds/sleep_time_seconds))" ]] && [[ ! -e "${readyfile}" ]]; do
     i=$((i+1))
     sleep "${sleep_time_seconds}"
-    echo ":hourglass: waiting for readyfile ($((sleep_time_seconds*i))s)"
+    echo "waiting for readyfile ($((sleep_time_seconds*i))s)"
   done
   [[ -e "${readyfile}" ]]
 }

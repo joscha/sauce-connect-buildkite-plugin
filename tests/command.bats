@@ -25,11 +25,12 @@ stub_docker() {
   local tunnel_identifier="$4"
   local sauce_connect_version="${5:-latest}"
   local attempts="${6:-1}"
+  local exec="${7:-"echo c0ffee"}"
 
   local args=( )
   local attempt
   for (( attempt=1; attempt<="${attempts}"; attempt++ )); do
-    args+=( "run -d -p 8000:8000 -v ${tmp_dir}:/tmp ustwo/sauce-connect:${sauce_connect_version} -P 8000 -u ${sauce_username} -k ${sauce_access_key} --tunnel-identifier ${tunnel_identifier} --readyfile /tmp/ready --logfile /tmp/sauce-connect.${attempt}.log : echo c0ffee-${attempt}" )
+    args+=( "run -d -p 8000:8000 -v ${tmp_dir}:/tmp ustwo/sauce-connect:${sauce_connect_version} -P 8000 -u ${sauce_username} -k ${sauce_access_key} --tunnel-identifier ${tunnel_identifier} --readyfile /tmp/ready --logfile /tmp/sauce-connect.${attempt}.log : ${exec} ${attempt}" )
   done
 
   stub docker "${args[@]}"
@@ -126,6 +127,45 @@ stub_docker() {
   unset BUILDKITE_JOB_ID
 }
 
+@test "Command errors when docker is not installed" {
+  export SAUCE_USERNAME="my-username"
+  export SAUCE_ACCESS_KEY="my-access-key"
+  export BUILDKITE_JOB_ID="my-job-id"
+
+  run "${PWD}/hooks/command"
+
+  assert_failure
+  assert_output --partial "error: docker is not available!"
+
+  unset SAUCE_USERNAME
+  unset SAUCE_ACCESS_KEY
+  unset BUILDKITE_JOB_ID
+}
+
+@test "Command errors when docker is erroring" {
+  export SAUCE_USERNAME="my-username"
+  export SAUCE_ACCESS_KEY="my-access-key"
+  export BUILDKITE_JOB_ID="my-job-id"
+
+  stub_docker \
+    "${TMP_DIR}" \
+    "${SAUCE_USERNAME}" \
+    "${SAUCE_ACCESS_KEY}" \
+    "${BUILDKITE_JOB_ID}" \
+    "latest" \
+    "1" \
+    "exit 1"
+
+  run "${PWD}/hooks/command"
+
+  assert_failure
+  assert_output --partial "error: Docker errored!"
+
+  unset SAUCE_USERNAME
+  unset SAUCE_ACCESS_KEY
+  unset BUILDKITE_JOB_ID
+}
+
 @test "Command runs BUILDKITE_COMMAND after the tunnel has been started" {
   export SAUCE_USERNAME="my-username"
   export SAUCE_ACCESS_KEY="my-access-key"
@@ -186,11 +226,11 @@ attempts=3
   assert_output --partial "error: sauce-connect failed!"
   assert_output --partial "waiting for readyfile (120s)"
   assert_output --partial "sauce-connect timed out!"
-  assert_output --partial "Docker process: c0ffee-1"
+  assert_output --partial "Docker process: c0ffee 1"
   assert_output --partial "attempt 1"
-  assert_output --partial "Docker process: c0ffee-2"
+  assert_output --partial "Docker process: c0ffee 2"
   assert_output --partial "attempt 2"
-  assert_output --partial "Docker process: c0ffee-3"
+  assert_output --partial "Docker process: c0ffee 3"
   assert_output --partial "attempt 3"
   assert_output --partial "Uploaded sauce-connect.*.log artifacts"
 
