@@ -21,7 +21,7 @@ DEFAULT_SAUCE_CONNECT_VERSION="4.4.12"
 error() {
   local message="$1"
   echo "^^^ +++"
-  echo "+++ :x: error: ${message}" >&2
+  echo "+++ :saucelabs: [sauce-connect] Error: ${message}" >&2
   exit 1  
 }
 
@@ -80,7 +80,7 @@ main() {
 }
 
 halt_sc() {
-  echo "--- :saucelabs:/sauce-connect: Stopping"
+  echo "--- :saucelabs: [sauce-connect] Stopping"
   local pidfile="${TMP_DIR}/pid"
   if [[ -e "${pidfile}" ]]; then
     local pid
@@ -96,7 +96,7 @@ halt_sc() {
 
 run_buildkite_command() {
   if [[ -n "${BUILDKITE_COMMAND:-}" ]]; then
-    echo "--- :saucelabs:/sauce-connect: Running command"
+    echo "--- :saucelabs: [sauce-connect] Running command"
     echo "Command: ${BUILDKITE_COMMAND}"
     echo
     bash -c "${BUILDKITE_COMMAND}"
@@ -106,7 +106,7 @@ run_buildkite_command() {
 sc3() {
   if ! (sc1 1 "$@" || sc1 2 "$@" || sc1 3 "$@") ; then
     upload_sauce_connect_logs
-    error "sauce-connect failed!"
+    error "Failed to connect!"
   fi
 }
 
@@ -116,7 +116,7 @@ sc1() {
   local sauce_username="$3"
   local sauce_access_key="$4"
 
-  echo "--- :saucelabs:/sauce-connect: Starting (Attempt ${attempt})"
+  echo "--- :saucelabs: [sauce-connect] Starting (Attempt ${attempt})"
   local readyfile="${TMP_DIR}/ready"
   local pidfile="${TMP_DIR}/pid"
 
@@ -135,13 +135,17 @@ sc1() {
     --logfile "${TMP_DIR}/sauce-connect.${attempt}.log" \
     --verbose \
     &
+  
+  local pid="$!"
 
   popd >/dev/null
   
-  if ! wait_for_readyfile "${readyfile}" "${pidfile}"; then
+  if ! wait_for_readyfile "${readyfile}" "${pid}"; then
+    echo
     echo "Warning: sauce-connect timed out!"
     return 1
   else
+    echo
     echo 'Success: sauce-connect is up \o/'
   fi
 }
@@ -153,26 +157,22 @@ is_pid_alive() {
 
 wait_for_readyfile() {
   local readyfile="$1"
-  local pidfile="$2"
+  local pid="$2"
   local i=0
   local sleep_time_seconds=2
   local max_wait_seconds=120
-  local pid=""
   while [[ "${i}" -lt "$((max_wait_seconds/sleep_time_seconds))" ]] \
      && [[ ! -e "${readyfile}" ]] \
-     && ( [[ -z "${pid}" ]] || is_pid_alive "${pid}") ; do
+     && is_pid_alive "${pid}" ; do
     i=$((i+1))
     sleep "${sleep_time_seconds}"
-    if [[ -e "${pidfile}" ]] && [[ -z "${pid}" ]]; then
-      pid=$(cat "${pidfile}")
-    fi
   done
   [[ -e "${readyfile}" ]]
 }
 
 upload_sauce_connect_logs() {
   pushd "${TMP_DIR}" >/dev/null
-  echo "--- :saucelabs:/sauce-connect: Uploading logs"
+  echo "--- :saucelabs: [sauce-connect] Uploading logs"
   buildkite-agent artifact upload "sauce-connect.*.log"
   popd >/dev/null
 }

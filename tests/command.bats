@@ -137,7 +137,7 @@ stub_sc() {
   run "${PWD}/hooks/command"
 
   assert_failure
-  assert_output --partial "error: unknown OS: ${OSTYPE}"
+  assert_output --partial "unknown OS: ${OSTYPE}"
 
   unset SAUCE_USERNAME
   unset SAUCE_ACCESS_KEY
@@ -196,7 +196,7 @@ attempts=3
   run "${PWD}/hooks/command"
 
   assert_failure
-  assert_output --partial "error: sauce-connect failed!"
+  assert_output --partial "Failed to connect!"
   assert_output --partial "sauce-connect timed out!"
   assert_output --partial "(Attempt 1)"
   assert_output --partial "sc connect 1"
