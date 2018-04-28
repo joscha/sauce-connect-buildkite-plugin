@@ -1,12 +1,12 @@
 steps:
-  - label: "🤡 :hammer:"
+  - label: "sauce-connect :hammer:"
     plugins:
       docker-compose#v1.3.1:
         run: tests
   - label: ":sparkles: lint"
     plugins:
       plugin-linter#v1.0.0:
-        name: detect-clowns
+        name: sauce-connect
   - label: ":shell: Shellcheck"
     plugins:
       shellcheck#v1.0.1:

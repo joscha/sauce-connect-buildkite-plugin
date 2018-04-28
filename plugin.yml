@@ -1,5 +1,15 @@
-name: detect-clowns
-description: Detects clown emojis in your codebase
-author: https://github.com/buildkite
-requirements: []
-configuration: {}
+name: sauce-connect
+description: Runs sauce-connect for a given step
+author: https://github.com/joscha
+requirements:
+  - buildkite-agent
+  - docker
+public: true
+configuration:
+  properties:
+    tunnel-identifier:
+      type: string
+    sauce-connect-version:
+      type: string
+  required: []
+  additionalProperties: false

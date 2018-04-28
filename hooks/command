@@ -1,11 +1,104 @@
 #!/bin/bash
 set -euo pipefail
 
-echo "--- Searching for Clowns 🤡"
-echo "$BUILDKITE_BUILD_CHECKOUT_PATH"
+TMP_DIR=$(mktemp -d -t sauce-connect-buildkite-plugin.XXXXXXXXXX)
+function cleanup {
+  rm -rf "${TMP_DIR}"
+}
+trap cleanup EXIT
 
-if grep -inr -C1 "🤡" . ; then
+DEFAULT_SAUCE_CONNECT_VERSION="latest"
+
+error() {
+  local message="$1"
   echo "^^^ +++"
-  echo "+++ :warning: Detected clowns! 🔪"
-  exit 1
-fi
+  echo "+++ :warning: error: ${message}" >&2
+  exit 1  
+}
+
+check_set() {
+  local name="$1"
+  if [[ -z "${!name:-}" ]]; then
+    error "${name} not set"
+  fi
+}
+
+main() {
+  check_set SAUCE_USERNAME
+  check_set SAUCE_ACCESS_KEY
+  [[ -z "${BUILDKITE_PLUGIN_SAUCE_CONNECT_TUNNEL_IDENTIFIER:-}" ]] && check_set BUILDKITE_JOB_ID
+
+  local tunnel_identifier="${BUILDKITE_PLUGIN_SAUCE_CONNECT_TUNNEL_IDENTIFIER:-${BUILDKITE_JOB_ID}}"
+  local sauce_connect_version="${BUILDKITE_PLUGIN_SAUCE_CONNECT_SAUCE_CONNECT_VERSION:-${DEFAULT_SAUCE_CONNECT_VERSION}}"
+
+  sc3 \
+    "${sauce_connect_version}" \
+    "${tunnel_identifier}" \
+    "${SAUCE_USERNAME}" \
+    "${SAUCE_ACCESS_KEY}"
+
+  run_command
+}
+
+run_command() {
+  echo "--- Running command '${BUILDKITE_COMMAND}'"
+  "${BUILDKITE_COMMAND}"
+}
+
+sc3() {
+  if ! (sc 1 "$@" || sc 2 "$@" || sc 3 "$@") ; then
+    upload_sauce_connect_logs
+    error "sauce-connect failed!"
+  fi
+}
+
+sc() {
+  local attempt="$1"
+  local sauce_connect_version="$2"
+  local tunnel_identifier="$3"
+  local sauce_username="$4"
+  local sauce_access_key="$5"
+
+  echo "--- :saucelabs: Spinning up sauce-connect, attempt ${attempt}"
+  echo "Using tunnel-identifier: '${tunnel_identifier}'"
+  rm -rf "${TMP_DIR}"
+  mkdir -p "${TMP_DIR}"
+  local readyfile="${TMP_DIR}/ready"
+
+  docker run -d -p 8000:8000 -v "${TMP_DIR}:/tmp" ustwo/sauce-connect:"${sauce_connect_version}" \
+    -P 8000 \
+    -u "${sauce_username}" \
+    -k "${sauce_access_key}" \
+    --tunnel-identifier "${tunnel_identifier}" \
+    --readyfile "/tmp/ready" \
+    --logfile "/tmp/sauce-connect.${attempt}.log"
+
+  if ! wait_for_readyfile "${readyfile}"; then
+    echo ":warning: sauce-connect timed out!"
+    return 1
+  else
+    echo "sauce-connect is up \o/"
+  fi
+}
+
+wait_for_readyfile() {
+  local readyfile="$1"
+  local i=0
+  local sleep_time_seconds=2
+  local max_wait_seconds=120
+
+  while [ "${i}" -lt "$((${max_wait_seconds}/${sleep_time_seconds}))" -a ! -e "${readyfile}" ]; do
+    i=$((i+1))
+    sleep "${sleep_time_seconds}"
+    echo "Waiting for readyfile ($((${sleep_time_seconds}*${i}))s)"
+  done
+  [[ -e "${readyfile}" ]]
+}
+
+upload_sauce_connect_logs() {
+  pushd "${TMP_DIR}" >/dev/null
+  buildkite-agent artifact upload "sauce-connect.*.log"
+  popd >/dev/null
+}
+
+main "$@"

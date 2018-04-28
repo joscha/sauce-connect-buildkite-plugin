@@ -4,3 +4,6 @@ services:
     image: buildkite/plugin-tester
     volumes:
       - ".:/plugin:ro"
+    environment:
+      - SAUCE_USERNAME
+      - SAUCE_ACCESS_KEY
