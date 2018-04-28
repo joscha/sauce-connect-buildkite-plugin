@@ -127,6 +127,24 @@ stub_sc() {
   unset BUILDKITE_JOB_ID
 }
 
+@test "Command fails for unknown OSes" {
+  export SAUCE_USERNAME="my-username"
+  export SAUCE_ACCESS_KEY="my-access-key"
+  export BUILDKITE_JOB_ID="my-job-id"
+  local ORIGINAL_OSTYPE="${OSTYPE}"
+  export OSTYPE="fancy-arch"
+
+  run "${PWD}/hooks/command"
+
+  assert_failure
+  assert_output --partial "error: unknown OS: ${OSTYPE}"
+
+  unset SAUCE_USERNAME
+  unset SAUCE_ACCESS_KEY
+  unset BUILDKITE_JOB_ID
+  export OSTYPE="${ORIGINAL_OSTYPE}"
+}
+
 @test "Command runs BUILDKITE_COMMAND after the tunnel has been started" {
   export SAUCE_USERNAME="my-username"
   export SAUCE_ACCESS_KEY="my-access-key"
