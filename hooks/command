@@ -5,20 +5,23 @@ set -euo pipefail
 if [[ -z "${TMP_DIR:-}" ]]; then
   TMP_DIR=$(mktemp -d -t sauce-connect-buildkite-plugin.XXXXXXXXXX)
   function cleanup {
+    echo "Cleaning up ${TMP_DIR}"
     rm -rf "${TMP_DIR}"
   }
-  trap cleanup EXIT
 else
-  echo "• Using given TMP_DIR: ${TMP_DIR}"
+  function cleanup {
+    echo "Not removing given TMP_DIR (${TMP_DIR})"
+  }
 fi
+trap halt_sc EXIT
 
-# See https://hub.docker.com/r/ustwo/sauce-connect/tags/
-DEFAULT_SAUCE_CONNECT_VERSION="latest"
+# See https://wiki.saucelabs.com/display/DOCS/Sauce+Connect+Proxy
+DEFAULT_SAUCE_CONNECT_VERSION="4.4.12"
 
 error() {
   local message="$1"
   echo "^^^ +++"
-  echo "+++ :x: error: ${message}" >&2
+  echo "+++ :saucelabs: [sauce-connect] Error: ${message}" >&2
   exit 1  
 }
 
@@ -29,6 +32,34 @@ check_set() {
   fi
 }
 
+maybe_download_sc() {
+  local sauce_connect_version="$1"
+
+  pushd "${TMP_DIR}" >/dev/null
+  if [[ -e "./sc" ]]; then
+    return
+  fi
+  local os
+  case "${OSTYPE}" in
+    linux*)
+      os="linux"
+      curl -fsSL "https://saucelabs.com/downloads/sc-${sauce_connect_version}-${os}.tar.gz" | tar -xzf - "sc-${sauce_connect_version}-${os}/bin/sc"
+      mv "./sc-${sauce_connect_version}-${os}/bin/sc" ./sc
+      rm -rf "./sc-${sauce_connect_version}-${os}/bin"
+    ;;
+    darwin*)
+      os="osx"
+      curl -fsSL -o sc.zip "https://saucelabs.com/downloads/sc-${sauce_connect_version}-${os}.zip"
+      unzip -p sc.zip "sc-${sauce_connect_version}-${os}/bin/sc" > ./sc
+      rm sc.zip
+      chmod +x ./sc
+    ;;
+    *) error "unknown OS: ${OSTYPE}" ;;
+  esac
+
+  popd >/dev/null
+}
+
 main() {
   check_set SAUCE_USERNAME
   check_set SAUCE_ACCESS_KEY
@@ -37,13 +68,10 @@ main() {
   local tunnel_identifier="${BUILDKITE_PLUGIN_SAUCE_CONNECT_TUNNEL_IDENTIFIER:-${BUILDKITE_JOB_ID}}"
   local sauce_connect_version="${BUILDKITE_PLUGIN_SAUCE_CONNECT_SAUCE_CONNECT_VERSION:-${DEFAULT_SAUCE_CONNECT_VERSION}}"
 
-  if ! hash docker >/dev/null 2>&1 ; then
-    error "docker is not available!"
-  fi
+  maybe_download_sc "${sauce_connect_version}"
 
   # shellcheck disable=SC2153
   sc3 \
-    "${sauce_connect_version}" \
     "${tunnel_identifier}" \
     "${SAUCE_USERNAME}" \
     "${SAUCE_ACCESS_KEY}"
@@ -51,67 +79,100 @@ main() {
   run_buildkite_command
 }
 
+halt_sc() {
+  echo "--- :saucelabs: [sauce-connect] Stopping"
+  local pidfile="${TMP_DIR}/pid"
+  if [[ -e "${pidfile}" ]]; then
+    local pid
+    pid=$(cat "${pidfile}")
+    kill -SIGINT "${pid}"
+    while is_pid_alive "${pid}"; do
+      sleep 1
+    done
+    echo
+  fi
+  cleanup
+}
+
 run_buildkite_command() {
   if [[ -n "${BUILDKITE_COMMAND:-}" ]]; then
-    echo "--- Running command '${BUILDKITE_COMMAND}'"
+    echo "--- :saucelabs: [sauce-connect] Running command"
+    echo "Command: ${BUILDKITE_COMMAND}"
+    echo
     bash -c "${BUILDKITE_COMMAND}"
   fi
 }
 
 sc3() {
-  if ! (sc 1 "$@" || sc 2 "$@" || sc 3 "$@") ; then
+  if ! (sc1 1 "$@" || sc1 2 "$@" || sc1 3 "$@") ; then
     upload_sauce_connect_logs
-    error "sauce-connect failed!"
+    error "Failed to connect!"
   fi
 }
 
-sc() {
+sc1() {
   local attempt="$1"
-  local sauce_connect_version="$2"
-  local tunnel_identifier="$3"
-  local sauce_username="$4"
-  local sauce_access_key="$5"
+  local tunnel_identifier="$2"
+  local sauce_username="$3"
+  local sauce_access_key="$4"
 
-  echo "--- :saucelabs: Spinning up sauce-connect, attempt ${attempt}"
-  echo "• Using tunnel-identifier: '${tunnel_identifier}'"
+  echo "--- :saucelabs: [sauce-connect] Starting (Attempt ${attempt})"
   local readyfile="${TMP_DIR}/ready"
+  local pidfile="${TMP_DIR}/pid"
 
-  echo -n "• Docker process: "
-  if ! docker run -d -p 8000:8000 -v "${TMP_DIR}:/tmp" ustwo/sauce-connect:"${sauce_connect_version}" \
-    -P 8000 \
+  pushd "${TMP_DIR}" >/dev/null
+
+  # TODO: find a better way to stub ./sc
+  if [[ -z "${IS_UNDER_TEST:-}" ]]; then
+    export PATH="${TMP_DIR}:${PATH}"
+  fi
+  sc \
     -u "${sauce_username}" \
     -k "${sauce_access_key}" \
     --tunnel-identifier "${tunnel_identifier}" \
-    --readyfile "/tmp/ready" \
-    --logfile "/tmp/sauce-connect.${attempt}.log"; then
-    error "Docker errored!"
-  fi
+    --readyfile "${readyfile}" \
+    --pidfile "${pidfile}" \
+    --logfile "${TMP_DIR}/sauce-connect.${attempt}.log" \
+    --verbose \
+    &
   
-  if ! wait_for_readyfile "${readyfile}"; then
+  local pid="$!"
+
+  popd >/dev/null
+  
+  if ! wait_for_readyfile "${readyfile}" "${pid}"; then
+    echo
     echo "Warning: sauce-connect timed out!"
     return 1
   else
+    echo
     echo 'Success: sauce-connect is up \o/'
   fi
 }
 
+is_pid_alive() {
+  local pid="$1"
+  kill -0 "${pid}" >/dev/null 2>&1
+}
+
 wait_for_readyfile() {
   local readyfile="$1"
+  local pid="$2"
   local i=0
   local sleep_time_seconds=2
   local max_wait_seconds=120
-
-  while [[ "${i}" -lt "$((max_wait_seconds/sleep_time_seconds))" ]] && [[ ! -e "${readyfile}" ]]; do
+  while [[ "${i}" -lt "$((max_wait_seconds/sleep_time_seconds))" ]] \
+     && [[ ! -e "${readyfile}" ]] \
+     && is_pid_alive "${pid}" ; do
     i=$((i+1))
     sleep "${sleep_time_seconds}"
-    echo "waiting for readyfile ($((sleep_time_seconds*i))s)"
   done
   [[ -e "${readyfile}" ]]
 }
 
 upload_sauce_connect_logs() {
   pushd "${TMP_DIR}" >/dev/null
-  echo "--- Uploading sauce-connect logs"
+  echo "--- :saucelabs: [sauce-connect] Uploading logs"
   buildkite-agent artifact upload "sauce-connect.*.log"
   popd >/dev/null
 }
