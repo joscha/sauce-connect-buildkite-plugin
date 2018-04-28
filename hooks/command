@@ -8,8 +8,6 @@ if [[ -z "${TMP_DIR:-}" ]]; then
     rm -rf "${TMP_DIR}"
   }
   trap cleanup EXIT
-else
-  echo "• Using given TMP_DIR: ${TMP_DIR}"
 fi
 
 # See https://wiki.saucelabs.com/display/DOCS/Sauce+Connect+Proxy
@@ -97,14 +95,13 @@ sc1() {
   local sauce_access_key="$4"
 
   echo "--- :saucelabs: Spinning up sauce-connect, attempt ${attempt}"
-  echo "• Using tunnel-identifier: '${tunnel_identifier}'"
   local readyfile="${TMP_DIR}/ready"
   local pidfile="${TMP_DIR}/pid"
 
   pushd "${TMP_DIR}" >/dev/null
 
   # TODO: find a better way to stub ./sc
-  if [[ "${RUNNING_IN_TEST:-}" != "true" ]]; then
+  if [[ -z "${IS_UNDER_TEST:-}" ]]; then
     export PATH="${TMP_DIR}:${PATH}"
   fi
   sc \
@@ -140,7 +137,6 @@ wait_for_readyfile() {
     echo "waiting for readyfile ($((sleep_time_seconds*i))s)"
     if [[ -e "${pidfile}" ]] && [[ -z "${pid}" ]]; then
       pid=$(cat "${pidfile}")
-      echo "• sc PID: ${pid}"
     fi
   done
   [[ -e "${readyfile}" ]]

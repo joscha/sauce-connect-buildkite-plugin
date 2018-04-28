@@ -7,7 +7,7 @@ load '/usr/local/lib/bats/load.bash'
 # export SC_STUB_DEBUG=/dev/tty
 # export MY_COMMAND_STUB_DEBUG=/dev/tty
 
-export RUNNING_IN_TEST=true
+export IS_UNDER_TEST=true
 
 setup() {
   export TMP_DIR=$(mktemp -d)
@@ -94,7 +94,6 @@ stub_sc() {
   run "${PWD}/hooks/command"
 
   assert_success
-  assert_output --partial "Using tunnel-identifier: 'my-config-identifier'"
 
   unstub sc
 
@@ -120,7 +119,6 @@ stub_sc() {
   run "${PWD}/hooks/command"
 
   assert_success
-  assert_output --partial "Using tunnel-identifier: 'my-job-id'"
 
   unstub sc
 
