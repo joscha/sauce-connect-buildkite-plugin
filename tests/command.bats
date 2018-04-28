@@ -2,6 +2,11 @@
 
 load '/usr/local/lib/bats/load.bash'
 
+# Uncomment these for debug output about stubbed commands
+# export BUILDKITE_AGENT_STUB_DEBUG=/dev/tty
+# export DOCKER_STUB_DEBUG=/dev/tty
+# export MY_COMMAND_STUB_DEBUG=/dev/tty
+
 setup() {
   export TMP_DIR=$(mktemp -d)
   stub buildkite-agent \
