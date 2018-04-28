@@ -26,19 +26,19 @@ steps:
   - command: 'yarn && yarn saucelabs-based-tests'
     plugins:
       sauce-connect#v1.0.0:
-       tunnel-identifier: "my-custom-tunnel-id"
+        tunnel-identifier: "my-custom-tunnel-id"
 ```
 
 ### `sauce-connect-version` (optional)
 
-The Sauce Connect version to use, available versions, see [here](https://hub.docker.com/r/ustwo/sauce-connect/tags/). Defaults to `"latest"`
+The Sauce Connect version to use, available versions, see [here](https://hub.docker.com/r/ustwo/sauce-connect/tags/). Defaults to `"latest"`.
 
 ```yml
 steps:
   - command: 'yarn && yarn saucelabs-based-tests'
     plugins:
       sauce-connect#v1.0.0:
-       sauce-connect-version: "4.4"
+        sauce-connect-version: "4.4"
 ```
 
 ## Tests
