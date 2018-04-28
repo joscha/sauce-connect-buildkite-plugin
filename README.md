@@ -12,7 +12,7 @@ It uses the [ustwo/docker-sauce-connect](https://github.com/ustwo/docker-sauce-c
 steps:
   - command: 'yarn && yarn saucelabs-based-tests'
     plugins:
-      joscha/sauce-connect#v1.0.0: ~
+      joscha/sauce-connect#v1.0.1: ~
 ```
 
 ## Configuration
@@ -25,7 +25,7 @@ The tunnel identifier to use, by default it will use the Buildkite Job ID (`BUIL
 steps:
   - command: 'yarn && yarn saucelabs-based-tests'
     plugins:
-      joscha/sauce-connect#v1.0.0:
+      joscha/sauce-connect#v1.0.1:
         tunnel-identifier: "my-custom-tunnel-id"
 ```
 
@@ -37,7 +37,7 @@ The Sauce Connect version to use, available versions, see [here](https://hub.doc
 steps:
   - command: 'yarn && yarn saucelabs-based-tests'
     plugins:
-      joscha/sauce-connect#v1.0.0:
+      joscha/sauce-connect#v1.0.1:
         sauce-connect-version: "4.4"
 ```
 
