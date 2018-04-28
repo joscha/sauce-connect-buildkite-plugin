@@ -111,6 +111,7 @@ wait_for_readyfile() {
 
 upload_sauce_connect_logs() {
   pushd "${TMP_DIR}" >/dev/null
+  echo "--- Uploading sauce-connect logs"
   buildkite-agent artifact upload "sauce-connect.*.log"
   popd >/dev/null
 }
