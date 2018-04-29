@@ -6,6 +6,15 @@ It contains a [command hook](hooks/command), and [tests](tests/command.bats) usi
 
 ## Example
 
+It looks like this on success:
+
+<img width="538" alt="sauce-connect success" src="https://user-images.githubusercontent.com/188038/39405935-18b34c88-4bf2-11e8-9e4e-a9f3bb0f6166.png">
+And like this on a connection failure:
+
+<img width="876" alt="sauce-connect failure" src="https://user-images.githubusercontent.com/188038/39405948-4770f12e-4bf2-11e8-9fa0-e64b54323536.png">
+
+## Usage
+
 ```yml
 steps:
   - command: 'yarn && yarn saucelabs-based-tests'
