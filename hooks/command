@@ -81,16 +81,24 @@ main() {
 
 halt_sc() {
   echo "--- :saucelabs: [sauce-connect] Stopping"
-  local pidfile="${TMP_DIR}/pid"
-  if [[ -e "${pidfile}" ]]; then
-    local pid
-    pid=$(cat "${pidfile}")
-    kill -SIGINT "${pid}"
-    while is_pid_alive "${pid}"; do
-      sleep 1
-    done
-    echo
-  fi
+
+  pushd "${TMP_DIR}" >/dev/null
+  local find_pidfiles
+  find_pidfiles=$(find . -name 'pid.*' -maxdepth 1 -type f)
+
+  local pidfile
+  while read -r pidfile; do
+    if [[ -e "${pidfile}" ]]; then
+      local pid
+      pid=$(cat "${pidfile}")
+      kill -SIGINT "${pid}" || true
+      while is_pid_alive "${pid}"; do
+        sleep 1
+      done
+      echo
+    fi
+  done <<< "${find_pidfiles}"
+  popd >/dev/null
   cleanup
 }
 
@@ -117,8 +125,8 @@ sc1() {
   local sauce_access_key="$4"
 
   echo "--- :saucelabs: [sauce-connect] Starting (Attempt ${attempt})"
-  local readyfile="${TMP_DIR}/ready"
-  local pidfile="${TMP_DIR}/pid"
+  local readyfile="${TMP_DIR}/ready.${attempt}"
+  local pidfile="${TMP_DIR}/pid.${attempt}"
 
   pushd "${TMP_DIR}" >/dev/null
 
