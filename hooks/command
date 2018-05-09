@@ -84,7 +84,7 @@ halt_sc() {
 
   pushd "${TMP_DIR}" >/dev/null
   local find_pidfiles
-  find_pidfiles=$(find . -name 'pid.*' -maxdepth 1 -type f)
+  find_pidfiles=$(find . -maxdepth 1 -name 'pid.*' -type f)
 
   local pidfile
   while read -r pidfile; do
