@@ -32,7 +32,7 @@ stub_sc() {
   local args=( )
   local attempt
   for (( attempt=1; attempt<="${attempts}"; attempt++ )); do
-    args+=( "-u ${sauce_username} -k ${sauce_access_key} --tunnel-identifier ${tunnel_identifier} --readyfile ${TMP_DIR}/ready --pidfile ${TMP_DIR}/pid --logfile ${TMP_DIR}/sauce-connect.${attempt}.log --verbose : ${exec} ${attempt}" )
+    args+=( "-u ${sauce_username} -k ${sauce_access_key} --tunnel-identifier ${tunnel_identifier} --readyfile ${TMP_DIR}/ready.${attempt} --pidfile ${TMP_DIR}/pid.${attempt} --logfile ${TMP_DIR}/sauce-connect.${attempt}.log --verbose : ${exec} ${attempt}" )
   done
 
   stub sc "${args[@]}"
@@ -83,7 +83,7 @@ stub_sc() {
   export BUILDKITE_PLUGIN_SAUCE_CONNECT_TUNNEL_IDENTIFIER="my-config-identifier"
   export BUILDKITE_JOB_ID="my-job-id"
   
-  touch "${TMP_DIR}/ready"
+  touch "${TMP_DIR}/ready.1"
 
   stub_sc \
     "${TMP_DIR}" \
@@ -108,7 +108,7 @@ stub_sc() {
   export SAUCE_ACCESS_KEY="my-access-key"
   export BUILDKITE_JOB_ID="my-job-id"
 
-  touch "${TMP_DIR}/ready"
+  touch "${TMP_DIR}/ready.1"
 
   stub_sc \
     "${TMP_DIR}" \
@@ -151,7 +151,7 @@ stub_sc() {
   export BUILDKITE_JOB_ID="my-job-id"
   export BUILDKITE_COMMAND="my-command foo"
 
-  touch "${TMP_DIR}/ready"
+  touch "${TMP_DIR}/ready.1"
 
   stub_sc \
     "${TMP_DIR}" \
