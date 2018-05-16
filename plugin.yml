@@ -1,4 +1,4 @@
-name: sauce-connect
+name: Sauce Connect
 description: Runs sauce-connect for a given step
 author: https://github.com/joscha
 requirements:
