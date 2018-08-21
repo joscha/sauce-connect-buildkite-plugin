@@ -16,7 +16,7 @@ fi
 trap halt_sc EXIT
 
 # See https://wiki.saucelabs.com/display/DOCS/Sauce+Connect+Proxy
-DEFAULT_SAUCE_CONNECT_VERSION="4.4.12"
+DEFAULT_SAUCE_CONNECT_VERSION="4.5.0"
 
 error() {
   local message="$1"
@@ -92,8 +92,14 @@ halt_sc() {
       local pid
       pid=$(cat "${pidfile}")
       kill -SIGINT "${pid}" || true
+      local counter=0
       while is_pid_alive "${pid}"; do
         sleep 1
+        counter=$((counter+1))
+        if [[ "${counter}" -gt 60 ]]; then
+          # try to kill again after a minute
+          kill -SIGINT "${pid}" || true
+        fi
       done
       echo
     fi
