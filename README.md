@@ -19,7 +19,7 @@ And like this on a connection failure:
 steps:
   - command: 'yarn && yarn saucelabs-based-tests'
     plugins:
-      joscha/sauce-connect#v2.1.0: ~
+      - joscha/sauce-connect#v2.1.0: ~
 ```
 
 ## Configuration
@@ -32,8 +32,8 @@ The tunnel identifier to use, by default it will use the Buildkite Job ID (`BUIL
 steps:
   - command: 'yarn && yarn saucelabs-based-tests'
     plugins:
-      joscha/sauce-connect#v2.1.0:
-        tunnel-identifier: "my-custom-tunnel-id"
+      - joscha/sauce-connect#v2.1.0:
+          tunnel-identifier: "my-custom-tunnel-id"
 ```
 
 ### `sauce-connect-version` (optional)
@@ -44,8 +44,8 @@ The Sauce Connect version to use, available versions, see [here](https://wiki.sa
 steps:
   - command: 'yarn && yarn saucelabs-based-tests'
     plugins:
-      joscha/sauce-connect#v2.1.0:
-        sauce-connect-version: "4.4.12"
+      - joscha/sauce-connect#v2.1.0:
+          sauce-connect-version: "4.4.12"
 ```
 
 ## Tests
