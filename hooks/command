@@ -16,7 +16,7 @@ fi
 trap halt_sc EXIT
 
 # See https://wiki.saucelabs.com/display/DOCS/Sauce+Connect+Proxy
-DEFAULT_SAUCE_CONNECT_VERSION="4.5.2"
+DEFAULT_SAUCE_CONNECT_VERSION="4.5.3"
 
 error() {
   local message="$1"
