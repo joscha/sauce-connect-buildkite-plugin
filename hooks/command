@@ -98,7 +98,7 @@ halt_sc() {
         counter=$((counter+1))
         if [[ "${counter}" -gt 60 ]]; then
           # try to kill again after a minute
-          kill -SIGINT "${pid}" || true
+          kill -SIGINT "${pid}" 2>/dev/null || true
         fi
       done
       echo
