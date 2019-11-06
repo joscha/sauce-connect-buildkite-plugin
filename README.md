@@ -32,7 +32,7 @@ The tunnel identifier to use, by default it will use the Buildkite Job ID (`BUIL
 steps:
   - command: 'yarn && yarn saucelabs-based-tests'
     plugins:
-      - joscha/sauce-connect#v2.1.1:
+      - joscha/sauce-connect#v3.0.0:
           tunnel-identifier: "my-custom-tunnel-id"
 ```
 
@@ -44,7 +44,7 @@ The Sauce Connect version to use, available versions, see [here](https://wiki.sa
 steps:
   - command: 'yarn && yarn saucelabs-based-tests'
     plugins:
-      - joscha/sauce-connect#v2.1.1:
+      - joscha/sauce-connect#v3.0.0:
           sauce-connect-version: "4.4.12"
 ```
 
