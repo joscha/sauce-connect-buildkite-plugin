@@ -42,7 +42,7 @@ stub_sc() {
   export SAUCE_USERNAME=""
   export SAUCE_ACCESS_KEY=""
 
-  run "${PWD}/hooks/command"
+  run "${PWD}/hooks/pre-command"
 
   assert_failure
   assert_output --partial "SAUCE_USERNAME not set"
@@ -55,7 +55,7 @@ stub_sc() {
   export SAUCE_USERNAME="my-username"
   export SAUCE_ACCESS_KEY=""
   
-  run "${PWD}/hooks/command"
+  run "${PWD}/hooks/pre-command"
 
   assert_failure
   assert_output --partial "SAUCE_ACCESS_KEY not set"
@@ -68,7 +68,7 @@ stub_sc() {
   export SAUCE_USERNAME="my-username"
   export SAUCE_ACCESS_KEY="my-access-key"
 
-  run "${PWD}/hooks/command"
+  run "${PWD}/hooks/pre-command"
 
   assert_failure
   assert_output --partial "BUILDKITE_JOB_ID not set"
@@ -91,7 +91,7 @@ stub_sc() {
     "${SAUCE_ACCESS_KEY}" \
     "${BUILDKITE_PLUGIN_SAUCE_CONNECT_TUNNEL_IDENTIFIER}"
 
-  run "${PWD}/hooks/command"
+  run "${PWD}/hooks/pre-command"
 
   assert_success
 
@@ -116,7 +116,7 @@ stub_sc() {
     "${SAUCE_ACCESS_KEY}" \
     "${BUILDKITE_JOB_ID}"
 
-  run "${PWD}/hooks/command"
+  run "${PWD}/hooks/pre-command"
 
   assert_success
 
@@ -134,7 +134,7 @@ stub_sc() {
   local ORIGINAL_OSTYPE="${OSTYPE}"
   export OSTYPE="fancy-arch"
 
-  run "${PWD}/hooks/command"
+  run "${PWD}/hooks/pre-command"
 
   assert_failure
   assert_output --partial "unknown OS: ${OSTYPE}"
@@ -143,37 +143,6 @@ stub_sc() {
   unset SAUCE_ACCESS_KEY
   unset BUILDKITE_JOB_ID
   export OSTYPE="${ORIGINAL_OSTYPE}"
-}
-
-@test "Command runs BUILDKITE_COMMAND after the tunnel has been started" {
-  export SAUCE_USERNAME="my-username"
-  export SAUCE_ACCESS_KEY="my-access-key"
-  export BUILDKITE_JOB_ID="my-job-id"
-  export BUILDKITE_COMMAND="my-command foo"
-
-  touch "${TMP_DIR}/ready.1"
-
-  stub_sc \
-    "${TMP_DIR}" \
-    "${SAUCE_USERNAME}" \
-    "${SAUCE_ACCESS_KEY}" \
-    "${BUILDKITE_JOB_ID}"
-
-  stub my-command "foo : echo 'All systems green'"
-
-  run "${PWD}/hooks/command"
-
-  assert_success
-  assert_output --partial "sauce-connect is up \o/"
-  assert_output --partial "All systems green"
-
-  unstub sc
-  unstub my-command
-
-  unset SAUCE_USERNAME
-  unset SAUCE_ACCESS_KEY
-  unset BUILDKITE_JOB_ID
-  unset BUILDKITE_COMMAND
 }
 
 attempts=3
@@ -193,7 +162,7 @@ attempts=3
 
   stub sleep
 
-  run "${PWD}/hooks/command"
+  run "${PWD}/hooks/pre-command"
 
   assert_failure
   assert_output --partial "Failed to connect!"
