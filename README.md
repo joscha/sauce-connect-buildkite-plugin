@@ -2,7 +2,7 @@
 
 A [Buildkite plugin](https://buildkite.com/docs/agent/v3/plugins) that opens a [sauce-connect tunnel](https://wiki.saucelabs.com/display/DOCS/Sauce+Connect+Proxy).
 
-It contains a [command hook](hooks/command), and [tests](tests/command.bats) using [plugin-tester](https://github.com/buildkite-plugins/plugin-tester).
+It contains a [pre-command hook](hooks/pre-command), [pre-exit hook](hooks/pre-exit), and [tests](tests/command.bats) using [plugin-tester](https://github.com/buildkite-plugins/plugin-tester).
 
 ## Example
 
