@@ -40,13 +40,15 @@ maybe_download_sc() {
   case "${OSTYPE}" in
     linux*)
       os="linux"
-      curl -fsSL "https://saucelabs.com/downloads/sc-${sauce_connect_version}-${os}.tar.gz" | tar -xzf - "sc-${sauce_connect_version}-${os}/bin/sc"
+      # TODO: cache this download on the agent
+      curl -fsSL --retry 5 "https://saucelabs.com/downloads/sc-${sauce_connect_version}-${os}.tar.gz" | tar -xzf - "sc-${sauce_connect_version}-${os}/bin/sc"
       mv "./sc-${sauce_connect_version}-${os}/bin/sc" ./sc
       rm -rf "./sc-${sauce_connect_version}-${os}/bin"
     ;;
     darwin*)
       os="osx"
-      curl -fsSL -o sc.zip "https://saucelabs.com/downloads/sc-${sauce_connect_version}-${os}.zip"
+      # TODO: cache this download on the agent
+      curl -fsSL --retry 5 -o sc.zip "https://saucelabs.com/downloads/sc-${sauce_connect_version}-${os}.zip"
       unzip -p sc.zip "sc-${sauce_connect_version}-${os}/bin/sc" > ./sc
       rm sc.zip
       chmod +x ./sc
