@@ -19,7 +19,7 @@ And like this on a connection failure:
 steps:
   - command: 'yarn && yarn saucelabs-based-tests'
     plugins:
-      - joscha/sauce-connect#v3.0.1: ~
+      - joscha/sauce-connect#v3.1.1: ~
 ```
 
 ## Configuration
@@ -32,7 +32,7 @@ The tunnel identifier to use, by default it will use the Buildkite Job ID (`BUIL
 steps:
   - command: 'yarn && yarn saucelabs-based-tests'
     plugins:
-      - joscha/sauce-connect#v3.0.1:
+      - joscha/sauce-connect#v3.1.1:
           tunnel-identifier: "my-custom-tunnel-id"
 ```
 
@@ -44,8 +44,20 @@ The Sauce Connect version to use, available versions, see [here](https://wiki.sa
 steps:
   - command: 'yarn && yarn saucelabs-based-tests'
     plugins:
-      - joscha/sauce-connect#v3.0.1:
+      - joscha/sauce-connect#v3.1.1:
           sauce-connect-version: "4.4.12"
+```
+
+### `force-upload-logs` (optional)
+
+Whether to force log upload or not. In the error case logs are automatically uploaded, this flag allows you to upload logs also in the success case.
+
+```yml
+steps:
+  - command: 'yarn && yarn saucelabs-based-tests'
+    plugins:
+      - joscha/sauce-connect#v3.1.1:
+          force-upload-logs: true
 ```
 
 ## Tests

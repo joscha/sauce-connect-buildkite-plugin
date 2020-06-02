@@ -78,7 +78,11 @@ main() {
 
 sc3() {
   if ! (sc1 1 "$@" || sc1 2 "$@" || sc1 3 "$@") ; then
-    upload_sauce_connect_logs
+    # if force-upload-logs is set, we already upload them in the pre-exit case,
+    # so no need to upload them here
+    if ! [[ "${BUILDKITE_PLUGIN_SAUCE_CONNECT_FORCE_UPLOAD_LOGS:-false}" =~ ^(true|on|1)$ ]]; then
+      upload_sauce_connect_logs
+    fi
     error "Failed to connect!"
   fi
 }
