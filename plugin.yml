@@ -3,6 +3,10 @@ description: Runs sauce-connect for a given step
 author: https://github.com/joscha
 requirements:
   - buildkite-agent
+  - bash
+  - curl
+  - unzip
+  - sleep
 public: true
 configuration:
   properties:
@@ -10,5 +14,7 @@ configuration:
       type: string
     sauce-connect-version:
       type: string
+    force-upload-logs:
+      type: boolean
   required: []
   additionalProperties: false

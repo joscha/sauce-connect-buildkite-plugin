@@ -115,7 +115,7 @@ sc1() {
   
   if ! wait_for_readyfile "${readyfile}" "${pid}"; then
     echo
-    echo "Warning: sauce-connect timed out!"
+    >&2 echo "Warning: sauce-connect timed out!"
     return 1
   else
     echo

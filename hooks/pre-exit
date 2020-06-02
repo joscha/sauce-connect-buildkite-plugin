@@ -6,7 +6,10 @@ if [[ -z "${TMP_DIR:-}" ]]; then
   # BUILDKITE_PLUGIN_SAUCE_CONNECT_TMP_DIR can be empty if the pre-command failed
   TMP_DIR="${BUILDKITE_PLUGIN_SAUCE_CONNECT_TMP_DIR:-}"
   function cleanup {
-    echo "Cleaning up ${TMP_DIR}"
+    if [[ "${BUILDKITE_PLUGIN_SAUCE_CONNECT_FORCE_UPLOAD_LOGS:-false}" =~ ^(true|on|1)$ ]]; then
+      upload_sauce_connect_logs
+    fi
+    echo "Removing ${TMP_DIR}"
     if [[ -d "${TMP_DIR}" ]]; then
         rm -rf "${TMP_DIR}"
     fi
@@ -48,6 +51,13 @@ halt_sc() {
       echo
     fi
   done <<< "${find_pidfiles}"
+  popd >/dev/null
+}
+
+upload_sauce_connect_logs() {
+  pushd "${TMP_DIR}" >/dev/null
+  echo "Uploading logs"
+  buildkite-agent artifact upload "sauce-connect.*.log"
   popd >/dev/null
 }
 
