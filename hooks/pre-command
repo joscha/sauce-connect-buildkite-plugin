@@ -69,7 +69,7 @@ maybe_download_sc() {
       local sc_tarball_path
       sc_tarball_path=$(maybe_download_sc_archive "${sauce_connect_version}" "${os}")
 
-      tar -xzf "${sc_tarball_path}" "sc-${sauce_connect_version}-${os}/bin/sc"
+      tar xzf "${sc_tarball_path}" "sc-${sauce_connect_version}-${os}/bin/sc"
       mv "./sc-${sauce_connect_version}-${os}/bin/sc" ./sc
       rm -rf "./sc-${sauce_connect_version}-${os}/bin"
     ;;
