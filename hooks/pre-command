@@ -5,7 +5,7 @@ PLUGIN_NAME=sauce-connect-buildkite-plugin
 
 # Allow to pass TMP_DIR for testing purposes
 if [[ -z "${TMP_DIR:-}" ]]; then
-  TMP_DIR=$(mktemp -d -t "${PLUGIN_NAME}.XXXXXXXXXX")
+  TMP_DIR="${TMPDIR:-/tmp}/${PLUGIN_NAME}"
   export BUILDKITE_PLUGIN_SAUCE_CONNECT_TMP_DIR="${TMP_DIR}"
   function cleanup {
     echo "Cleaning up ${TMP_DIR}"
@@ -33,7 +33,7 @@ check_set() {
 
 maybe_download_sc_archive() {
   local sc_archive="$1"
-  local sc_archive_path="${TMP_DIR}/${PLUGIN_NAME}/${sc_archive}"
+  local sc_archive_path="${TMP_DIR}/${sc_archive}"
   if [[ ! -e "${sc_archive_path}" ]]; then
     curl -fsSL --create-dirs --retry 5 -o "${sc_archive_path}" "https://saucelabs.com/downloads/${sc_archive}"
   fi
