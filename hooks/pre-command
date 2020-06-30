@@ -1,9 +1,11 @@
 #!/bin/bash
 set -euo pipefail
 
+PLUGIN_NAME=sauce-connect-buildkite-plugin
+
 # Allow to pass TMP_DIR for testing purposes
 if [[ -z "${TMP_DIR:-}" ]]; then
-  TMP_DIR=$(mktemp -d -t sauce-connect-buildkite-plugin.XXXXXXXXXX)
+  TMP_DIR=$(mktemp -d -t ${PLUGIN_NAME}.XXXXXXXXXX)
   export BUILDKITE_PLUGIN_SAUCE_CONNECT_TMP_DIR="${TMP_DIR}"
   function cleanup {
     echo "Cleaning up ${TMP_DIR}"
@@ -44,7 +46,7 @@ maybe_download_sc_archive() {
     *) error "unknown OS: ${os}" ;;
   esac
 
-  local sc_archive_path="${TMP_DIR}/${sc_archive}"
+  local sc_archive_path="${TMP_DIR}/${PLUGIN_NAME}/${sc_archive}"
   if [[ ! -e "${sc_archive_path}" ]]; then
     curl -fsSL --retry 5 -o "${sc_archive_path}" "https://saucelabs.com/downloads/${sc_archive}"
   fi
