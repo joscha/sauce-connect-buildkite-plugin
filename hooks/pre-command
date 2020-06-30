@@ -19,7 +19,7 @@ error() {
   local message="$1"
   echo "^^^ +++"
   echo "+++ :saucelabs: [sauce-connect] Error: ${message}" >&2
-  exit 1  
+  exit 1
 }
 
 check_set() {
@@ -40,16 +40,27 @@ maybe_download_sc() {
   case "${OSTYPE}" in
     linux*)
       os="linux"
-      # TODO: cache this download on the agent
-      curl -fsSL --retry 5 "https://saucelabs.com/downloads/sc-${sauce_connect_version}-${os}.tar.gz" | tar -xzf - "sc-${sauce_connect_version}-${os}/bin/sc"
+
+      local sc_tarball="sc-${sauce_connect_version}-${os}.tar.gz"
+      local sc_tarball_path="${TMP_DIR}/${sc_tarball}"
+      if [[ ! -e "${sc_tarball_path}" ]]; then
+        curl -fsSL --retry 5 -o "${sc_tarball_path}" "https://saucelabs.com/downloads/${sc_tarball}"
+      fi
+
+      tar -xzf "${sc_tarball_path}" "sc-${sauce_connect_version}-${os}/bin/sc"
       mv "./sc-${sauce_connect_version}-${os}/bin/sc" ./sc
       rm -rf "./sc-${sauce_connect_version}-${os}/bin"
     ;;
     darwin*)
       os="osx"
-      # TODO: cache this download on the agent
-      curl -fsSL --retry 5 -o sc.zip "https://saucelabs.com/downloads/sc-${sauce_connect_version}-${os}.zip"
-      unzip -p sc.zip "sc-${sauce_connect_version}-${os}/bin/sc" > ./sc
+
+      local sc_zip="sc-${sauce_connect_version}-${os}.zip"
+      local sc_zip_path="${TMP_DIR}/${sc_zip}"
+      if [[ ! -e "${sc_zip_path}" ]]; then
+        curl -fsSL --retry 5 -o "${sc_zip_path}" "https://saucelabs.com/downloads/${sc_zip}"
+      fi
+
+      unzip -p "${sc_zip_path}" "sc-${sauce_connect_version}-${os}/bin/sc" > ./sc
       rm sc.zip
       chmod +x ./sc
     ;;
@@ -112,11 +123,11 @@ sc1() {
     --logfile "${TMP_DIR}/sauce-connect.${attempt}.log" \
     --verbose \
     &
-  
+
   local pid="$!"
 
   popd >/dev/null
-  
+
   if ! wait_for_readyfile "${readyfile}" "${pid}"; then
     echo
     >&2 echo "Warning: sauce-connect timed out!"
