@@ -7,11 +7,6 @@ PLUGIN_NAME=sauce-connect-buildkite-plugin
 if [[ -z "${TMP_DIR:-}" ]]; then
   TMP_DIR="${TMPDIR:-/tmp}/${PLUGIN_NAME}"
   export BUILDKITE_PLUGIN_SAUCE_CONNECT_TMP_DIR="${TMP_DIR}"
-  function cleanup {
-    echo "Cleaning up ${TMP_DIR}"
-    rm -rf "${TMP_DIR}"
-  }
-  trap cleanup ERR
 fi
 
 # See https://wiki.saucelabs.com/display/DOCS/Sauce+Connect+Proxy
