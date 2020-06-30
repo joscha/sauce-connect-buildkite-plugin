@@ -35,7 +35,15 @@ maybe_download_sc_archive() {
   local sc_archive="$1"
   local sc_archive_path="${TMP_DIR}/${sc_archive}"
   if [[ ! -e "${sc_archive_path}" ]]; then
-    curl -fsSL --create-dirs --retry 5 -o "${sc_archive_path}" "https://saucelabs.com/downloads/${sc_archive}"
+    local tmp_archive_path
+    tmp_archive_path="${TMP_DIR}/$(mktemp)"
+
+    # Download to a temporary file & then move it to the desired location once we're sure it has succeeded.
+    # Otherwise, if the download is interrupted we are left with a corrupted file which we will assume is fully
+    # downloaded on subsequent invocations of `maybe_download_sc_archive`.
+    curl -fsSL --create-dirs --retry 5 -o "${tmp_archive_path}" "https://saucelabs.com/downloads/${sc_archive}"
+
+    mv "${tmp_archive_path}" "${sc_archive_path}"
   fi
 
   echo "${sc_archive_path}"
