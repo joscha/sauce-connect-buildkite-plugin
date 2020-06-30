@@ -29,6 +29,29 @@ check_set() {
   fi
 }
 
+maybe_download_sc_archive() {
+  local sauce_connect_version="$1"
+  local os="$2"
+
+  local sc_archive
+  case "${os}" in
+    linux*)
+      sc_archive="sc-${sauce_connect_version}-${os}.tar.gz"
+    ;;
+    darwin*)
+      sc_archive="sc-${sauce_connect_version}-${os}.zip"
+    ;;
+    *) error "unknown OS: ${os}" ;;
+  esac
+
+  local sc_archive_path="${TMP_DIR}/${sc_archive}"
+  if [[ ! -e "${sc_archive_path}" ]]; then
+    curl -fsSL --retry 5 -o "${sc_archive_path}" "https://saucelabs.com/downloads/${sc_archive}"
+  fi
+
+  echo "${sc_archive_path}"
+}
+
 maybe_download_sc() {
   local sauce_connect_version="$1"
 
@@ -41,11 +64,8 @@ maybe_download_sc() {
     linux*)
       os="linux"
 
-      local sc_tarball="sc-${sauce_connect_version}-${os}.tar.gz"
-      local sc_tarball_path="${TMP_DIR}/${sc_tarball}"
-      if [[ ! -e "${sc_tarball_path}" ]]; then
-        curl -fsSL --retry 5 -o "${sc_tarball_path}" "https://saucelabs.com/downloads/${sc_tarball}"
-      fi
+      local sc_tarball_path
+      sc_tarball_path=$(maybe_download_sc_archive "${sauce_connect_version}" "${os}")
 
       tar -xzf "${sc_tarball_path}" "sc-${sauce_connect_version}-${os}/bin/sc"
       mv "./sc-${sauce_connect_version}-${os}/bin/sc" ./sc
@@ -54,11 +74,8 @@ maybe_download_sc() {
     darwin*)
       os="osx"
 
-      local sc_zip="sc-${sauce_connect_version}-${os}.zip"
-      local sc_zip_path="${TMP_DIR}/${sc_zip}"
-      if [[ ! -e "${sc_zip_path}" ]]; then
-        curl -fsSL --retry 5 -o "${sc_zip_path}" "https://saucelabs.com/downloads/${sc_zip}"
-      fi
+      local sc_zip_path
+      sc_zip_path=$(maybe_download_sc_archive "${sauce_connect_version}" "${os}")
 
       unzip -p "${sc_zip_path}" "sc-${sauce_connect_version}-${os}/bin/sc" > ./sc
       rm sc.zip
