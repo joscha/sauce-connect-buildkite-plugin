@@ -48,7 +48,7 @@ maybe_download_sc_archive() {
 
   local sc_archive_path="${TMP_DIR}/${PLUGIN_NAME}/${sc_archive}"
   if [[ ! -e "${sc_archive_path}" ]]; then
-    curl -fsSL --retry 5 -o "${sc_archive_path}" "https://saucelabs.com/downloads/${sc_archive}"
+    curl -fsSL --create-dirs --retry 5 -o "${sc_archive_path}" "https://saucelabs.com/downloads/${sc_archive}"
   fi
 
   echo "${sc_archive_path}"
