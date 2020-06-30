@@ -5,7 +5,7 @@ PLUGIN_NAME=sauce-connect-buildkite-plugin
 
 # Allow to pass TMP_DIR for testing purposes
 if [[ -z "${TMP_DIR:-}" ]]; then
-  TMP_DIR=$(mktemp -d -t ${PLUGIN_NAME}.XXXXXXXXXX)
+  TMP_DIR=$(mktemp -d -t "${PLUGIN_NAME}.XXXXXXXXXX")
   export BUILDKITE_PLUGIN_SAUCE_CONNECT_TMP_DIR="${TMP_DIR}"
   function cleanup {
     echo "Cleaning up ${TMP_DIR}"
