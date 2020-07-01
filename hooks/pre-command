@@ -31,7 +31,7 @@ maybe_download_sc_archive() {
   local sc_archive_path="${TMP_DIR}/${sc_archive}"
   if [[ ! -e "${sc_archive_path}" ]]; then
     local tmp_archive_path
-    tmp_archive_path="${TMP_DIR}/$(mktemp)"
+    tmp_archive_path="$(mktemp -p ${TMP_DIR})"
 
     # Download to a temporary file & then move it to the desired location once we're sure it has succeeded.
     # Otherwise, if the download is interrupted we are left with a corrupted file which we will assume is fully
