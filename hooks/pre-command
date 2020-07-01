@@ -6,6 +6,7 @@ PLUGIN_NAME=sauce-connect-buildkite-plugin
 # Allow to pass TMP_DIR for testing purposes
 if [[ -z "${TMP_DIR:-}" ]]; then
   TMP_DIR="${TMPDIR:-/tmp}/${PLUGIN_NAME}"
+  mkdir -p "${TMP_DIR}"
   export BUILDKITE_PLUGIN_SAUCE_CONNECT_TMP_DIR="${TMP_DIR}"
 fi
 
