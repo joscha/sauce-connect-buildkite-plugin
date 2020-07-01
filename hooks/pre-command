@@ -1,15 +1,12 @@
 #!/bin/bash
 set -euo pipefail
 
+PLUGIN_NAME=sauce-connect-buildkite-plugin
+
 # Allow to pass TMP_DIR for testing purposes
 if [[ -z "${TMP_DIR:-}" ]]; then
-  TMP_DIR=$(mktemp -d -t sauce-connect-buildkite-plugin.XXXXXXXXXX)
+  TMP_DIR="${TMPDIR:-/tmp}/${PLUGIN_NAME}"
   export BUILDKITE_PLUGIN_SAUCE_CONNECT_TMP_DIR="${TMP_DIR}"
-  function cleanup {
-    echo "Cleaning up ${TMP_DIR}"
-    rm -rf "${TMP_DIR}"
-  }
-  trap cleanup ERR
 fi
 
 # See https://wiki.saucelabs.com/display/DOCS/Sauce+Connect+Proxy
@@ -19,7 +16,7 @@ error() {
   local message="$1"
   echo "^^^ +++"
   echo "+++ :saucelabs: [sauce-connect] Error: ${message}" >&2
-  exit 1  
+  exit 1
 }
 
 check_set() {
@@ -27,6 +24,24 @@ check_set() {
   if [[ -z "${!name:-}" ]]; then
     error "${name} not set"
   fi
+}
+
+maybe_download_sc_archive() {
+  local sc_archive="$1"
+  local sc_archive_path="${TMP_DIR}/${sc_archive}"
+  if [[ ! -e "${sc_archive_path}" ]]; then
+    local tmp_archive_path
+    tmp_archive_path="$(mktemp -p ${TMP_DIR})"
+
+    # Download to a temporary file & then move it to the desired location once we're sure it has succeeded.
+    # Otherwise, if the download is interrupted we are left with a corrupted file which we will assume is fully
+    # downloaded on subsequent invocations of `maybe_download_sc_archive`.
+    curl -fsSL --create-dirs --retry 5 -o "${tmp_archive_path}" "https://saucelabs.com/downloads/${sc_archive}"
+
+    mv "${tmp_archive_path}" "${sc_archive_path}"
+  fi
+
+  echo "${sc_archive_path}"
 }
 
 maybe_download_sc() {
@@ -40,16 +55,23 @@ maybe_download_sc() {
   case "${OSTYPE}" in
     linux*)
       os="linux"
-      # TODO: cache this download on the agent
-      curl -fsSL --retry 5 "https://saucelabs.com/downloads/sc-${sauce_connect_version}-${os}.tar.gz" | tar -xzf - "sc-${sauce_connect_version}-${os}/bin/sc"
+
+      local sc_tarball="sc-${sauce_connect_version}-${os}.tar.gz"
+      local sc_tarball_path
+      sc_tarball_path=$(maybe_download_sc_archive "${sc_tarball}")
+
+      tar xzf "${sc_tarball_path}" "sc-${sauce_connect_version}-${os}/bin/sc"
       mv "./sc-${sauce_connect_version}-${os}/bin/sc" ./sc
       rm -rf "./sc-${sauce_connect_version}-${os}/bin"
     ;;
     darwin*)
       os="osx"
-      # TODO: cache this download on the agent
-      curl -fsSL --retry 5 -o sc.zip "https://saucelabs.com/downloads/sc-${sauce_connect_version}-${os}.zip"
-      unzip -p sc.zip "sc-${sauce_connect_version}-${os}/bin/sc" > ./sc
+
+      local sc_zip="sc-${sauce_connect_version}-${os}.zip"
+      local sc_zip_path
+      sc_zip_path=$(maybe_download_sc_archive "${sc_zip}")
+
+      unzip -p "${sc_zip_path}" "sc-${sauce_connect_version}-${os}/bin/sc" > ./sc
       rm sc.zip
       chmod +x ./sc
     ;;
@@ -112,11 +134,11 @@ sc1() {
     --logfile "${TMP_DIR}/sauce-connect.${attempt}.log" \
     --verbose \
     &
-  
+
   local pid="$!"
 
   popd >/dev/null
-  
+
   if ! wait_for_readyfile "${readyfile}" "${pid}"; then
     echo
     >&2 echo "Warning: sauce-connect timed out!"
