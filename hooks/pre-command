@@ -60,6 +60,11 @@ maybe_download_sc() {
       local sc_tarball="sc-${sauce_connect_version}-${os}.tar.gz"
       local sc_tarball_path
       sc_tarball_path=$(maybe_download_sc_archive "${sc_tarball}")
+      if ! tar -tzf "${sc_tarball_path}" >/dev/null; then
+        # corrupted; try again
+        rm -f "${sc_tarball_path}"
+        sc_tarball_path=$(maybe_download_sc_archive "${sc_tarball}")
+      fi
 
       tar xzf "${sc_tarball_path}" "sc-${sauce_connect_version}-${os}/bin/sc"
       mv "./sc-${sauce_connect_version}-${os}/bin/sc" ./sc
