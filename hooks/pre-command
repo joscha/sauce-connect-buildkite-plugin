@@ -48,11 +48,10 @@ maybe_download_sc_archive() {
 maybe_download_sc() {
   local sauce_connect_version="$1"
 
-  pushd "${TMP_DIR}" >/dev/null
-  if [[ -e "./sc" ]]; then
-    popd >/dev/null
+  if [[ -e "${TMP_DIR}/sc" ]]; then
     return
   fi
+  pushd "${TMP_DIR}" >/dev/null
   local os
   case "${OSTYPE}" in
     linux*)
