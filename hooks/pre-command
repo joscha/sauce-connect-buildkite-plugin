@@ -50,6 +50,7 @@ maybe_download_sc() {
 
   pushd "${TMP_DIR}" >/dev/null
   if [[ -e "./sc" ]]; then
+    popd >/dev/null
     return
   fi
   local os
